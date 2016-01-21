@@ -1,7 +1,6 @@
 package btrfs
 
 import (
-	"os/exec"
 	"regexp"
 	"bytes"
 	"strconv"
@@ -25,28 +24,20 @@ func (s SizeInBytes) String() string {
 	} else if s > KilobyteMultiplicant {
 		return fmt.Sprintf("%4.2fKiB", float64(s / KilobyteMultiplicant))
 	}
-	return fmt.Sprintf("%4.2fbytes", float64(s))
+	return fmt.Sprintf("%4.2fB", float64(s))
 }
 
 type Device struct {
-	Id   int
-	Size SizeInBytes
-	Used SizeInBytes
-	Free SizeInBytes
-	Path string
+	Id     int
+	Size   SizeInBytes
+	Used   SizeInBytes
+	Free   SizeInBytes
+	Device string
 }
 
 func Info() (arrays []Array, err error) {
 	arrays = make([]Array, 0)
-
-	var cmd *exec.Cmd
-	if UseSudo {
-		cmd = exec.Command("sudo", "btrfs", "filesystem", "show")
-	} else {
-		cmd = exec.Command("btrfs", "filesystem", "show")
-	}
-
-	out, err := cmd.Output()
+	out, err := getCommand("btrfs", "filesystem", "show").Output()
 	if err != nil {
 		return
 	}
@@ -56,7 +47,7 @@ func Info() (arrays []Array, err error) {
 	if err != nil {
 		return
 	}
-	deviceRegex, err := regexp.Compile(`devid\s+(\d)\ssize\s(\d+\.\d+\w{3})\sused\s+(\d+\.\d+\w{3})\s+path\s+([\w/]+)`)
+	deviceRegex, err := regexp.Compile(`devid\s+(\d)\ssize\s(\d+\.\d+\w+)\sused\s+(\d+\.\d+\w+)\s+path\s+([\w/]+)`)
 	if err != nil {
 		return
 	}
@@ -89,7 +80,7 @@ func Info() (arrays []Array, err error) {
 			}
 
 			d.Free = d.Size - d.Used
-			d.Path = string(deviceMatches[4])
+			d.Device = string(deviceMatches[4])
 			a.Devices = append(a.Devices, d)
 		}
 	}

@@ -1,7 +1,6 @@
 package btrfs
 
 import (
-	"os/exec"
 	"regexp"
 	"strconv"
 )
@@ -16,21 +15,14 @@ type MkfsInfo struct {
 }
 
 func Mkfs(dev string, label string) (info MkfsInfo, err error) {
-	var cmd *exec.Cmd
-	if UseSudo {
-		cmd = exec.Command("sudo", "mkfs.btrfs", dev, "-f", "--label", label)
-	} else {
-		cmd = exec.Command("mkfs.btrfs", dev, "-f", "--label", label)
-	}
-
-	out, err := cmd.Output()
+	out, err := getCommand("mkfs.btrfs", dev, "-f", "--label", label).Output()
 	if err != nil {
 		return
 	}
 	info.Device = dev
 	info.Label = label
 
-	infoRegex, err := regexp.Compile(`nodesize\s(\d+)\sleafsize\s(\d+)\ssectorsize\s(\d+)\ssize\s(\d+.\d+\w{3})`)
+	infoRegex, err := regexp.Compile(`nodesize\s(\d+)\sleafsize\s(\d+)\ssectorsize\s(\d+)\ssize\s(\d+.\d+\w+)`)
 	if err != nil {
 		return
 	}

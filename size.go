@@ -1,16 +1,23 @@
 package btrfs
 
-import "strconv"
+import (
+	"strconv"
+	"regexp"
+)
 
 type SizeInBytes int64
 
 func parseSize(rawSize []byte) (size SizeInBytes, err error) {
-	n := len(rawSize) - 3
-	unit := string(rawSize[n:])
-	s, err := strconv.ParseFloat(string(rawSize[:n]), 64)
+	sizeRegex, err := regexp.Compile(`(\d+.\d+)(\w+)`)
 	if err != nil {
 		return
 	}
-	size = SizeInBytes(s * float64(sizeMap[unit]))
+	matches := sizeRegex.FindSubmatch(rawSize)
+
+	s, err := strconv.ParseFloat(string(matches[1]), 64)
+	if err != nil {
+		return
+	}
+	size = SizeInBytes(s * float64(sizeMap[string(matches[2])]))
 	return
 }
